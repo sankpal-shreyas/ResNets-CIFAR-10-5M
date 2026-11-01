@@ -1,0 +1,10 @@
+# WRN-28 (64, 128, 224) with ShakeDrop on every residual branch (linear decay to p=0.5) and a
+# BatchNorm closing each branch, which ShakeDrop needs to converge (Yamada et al.):
+# 4,842,906 parameters. Without that BN (run b3) training stalled at 77% validation accuracy.
+base: wrn28_ta.yaml
+model:
+  name: wrn
+  depth: 28
+  widths: [64, 128, 224]
+  reg: shakedrop
+  p_drop: 0.5

@@ -1,0 +1,15 @@
+# HPC round 4 (A100):  bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc4.txt
+# Round 3: ensemble distillation helps without TTA (k6 98.08 / k7 98.14 vs plain seeds 97.66-97.86,
+# McNemar p = 0.006-0.06); with flip_shift TTA only k6 gains (98.28 vs 98.08-98.16). The students
+# are still 0.2-0.3% below their teacher ensemble (98.38 no TTA / 98.48 flip_shift), and bigger
+# ensembles are not more accurate (98.38-98.46 no TTA), so this round tests patience: longer
+# distillation (Beyer et al. 2022). Teachers: ens4 = s3+s4+s5+k4 (as k6), ens6 = s3+s4+s5+s6+s8+s9
+# (adds SE and ResNet-222 for diversity). The teacher pass now runs as a CUDA graph (~25% faster).
+
+configs/kd_wrn28_from_t1.yaml --set name=k10_kd_ens4_T4_1600ep train.epochs=1600 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+configs/kd_wrn28_from_t1.yaml --set name=k11_kd_ens6_T4_1600ep train.epochs=1600 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/s6_wrn28_800ep_seed2/model_final.pt,runs/s8_wrn28_se_800ep/model_final.pt,runs/s9_resnet222_800ep/model_final.pt]
+configs/kd_wrn28_from_t1.yaml --set name=k13_kd_ens4_T4_3200ep train.epochs=3200 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+# submission candidate: k11's recipe on all 50k images (the laptop trains k10's as k10f)
+configs/kd_wrn28_from_t1.yaml --set name=k11f_kd_ens6_T4_1600ep_full train.epochs=1600 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/s6_wrn28_800ep_seed2/model_final.pt,runs/s8_wrn28_se_800ep/model_final.pt,runs/s9_resnet222_800ep/model_final.pt]
+# stochastic depth (linear rule, last block 0.1), never tried; cheap
+configs/wrn28_ta.yaml --set name=s11_wrn28_droppath_800ep train.epochs=800 data.cutmix_alpha=1.0 data.mix_prob=0.5 model.reg=droppath model.p_drop=0.1

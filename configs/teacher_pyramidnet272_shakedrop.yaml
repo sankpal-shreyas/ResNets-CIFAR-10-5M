@@ -1,0 +1,22 @@
+# Teacher for knowledge distillation (not a submission model): PyramidNet-272 (bottleneck,
+# alpha=200) + ShakeDrop, 26.2M parameters -- the strongest CIFAR-10 ResNet in the AutoAugment
+# and SAM papers. Deep and slow; meant for an HPC A100.
+model:
+  name: pyramidnet
+  depth: 272
+  alpha: 200
+  bottleneck: true
+  reg: shakedrop
+  p_drop: 0.5
+enforce_param_limit: false
+data:
+  policy: ta
+  cutout: 16
+train:
+  epochs: 300
+  batch_size: 128
+  lr: 0.1
+  weight_decay: 1.0e-4
+  label_smoothing: 0.0
+  ema_decay: 0.9995
+  ckpt_every: 5

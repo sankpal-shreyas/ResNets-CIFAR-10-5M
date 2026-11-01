@@ -1,0 +1,8 @@
+# PyramidNet-110 (basic blocks, alpha=84) + ShakeDrop (p=0.5): 3,904,446 parameters.
+base: wrn28_ta.yaml
+model:
+  name: pyramidnet
+  depth: 110
+  alpha: 84
+  reg: shakedrop
+  p_drop: 0.5

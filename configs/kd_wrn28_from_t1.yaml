@@ -1,0 +1,16 @@
+# Knowledge distillation into the 4.84M-parameter WRN-28 student ("function matching",
+# Beyer et al. 2022): the teacher labels exactly the augmented + mixed images the student sees,
+# so every CutMix/MixUp image gets a soft target from the teacher.
+# Teacher: runs/t1_wrn28_10_sam (WRN-28-10, trained from scratch on the same 45k split).
+base: wrn28_ta.yaml
+data:
+  cutmix_alpha: 1.0
+  mixup_alpha: 0.2
+  mix_prob: 1.0
+train:
+  epochs: 300
+  label_smoothing: 0.0
+kd:
+  teachers: [runs/t1_wrn28_10_sam/model_final.pt]
+  temperature: 1.0
+  alpha: 0.1   # 10% hard-label (mixed) cross-entropy, 90% distillation

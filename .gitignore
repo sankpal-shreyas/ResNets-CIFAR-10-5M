@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+data/
+runs/
+runs_*/
+*.log
+*.pt
+*.npy
+submission*.csv
+.ipynb_checkpoints/
+kaggle.txt
+project1.pdf
+p1_code*.zip
+submissions/

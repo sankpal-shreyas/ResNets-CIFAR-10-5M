@@ -1,0 +1,7 @@
+# Shake-Shake 26 2x40d (per-branch widths 40/80/160): 4,561,354 trainable parameters.
+# Same recipe as wrn28_ta.yaml; Shake-Shake typically needs long schedules to pay off.
+base: wrn28_ta.yaml
+model:
+  name: shakeshake
+  depth: 26
+  widths: [40, 80, 160]

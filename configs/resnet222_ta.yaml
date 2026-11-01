@@ -1,0 +1,6 @@
+# Post-activation ResNet, 3 stages x 2 BasicBlocks, widths (96, 192, 320): 4,902,506 parameters.
+base: wrn28_ta.yaml
+model:
+  name: resnet
+  blocks: [2, 2, 2]
+  widths: [96, 192, 320]

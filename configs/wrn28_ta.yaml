@@ -1,0 +1,16 @@
+# Pre-activation WRN-28 with widths (64, 128, 224): 4,839,578 trainable parameters.
+# Recipe: crop+flip + TrivialAugmentWide + Cutout16, label smoothing, EMA, SGD-Nesterov, cosine.
+model:
+  name: wrn
+  depth: 28
+  widths: [64, 128, 224]
+data:
+  policy: ta
+  cutout: 16
+train:
+  epochs: 200
+  batch_size: 128
+  lr: 0.1
+  weight_decay: 5.0e-4
+  label_smoothing: 0.1
+  ema_decay: 0.9995

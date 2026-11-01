@@ -1,0 +1,20 @@
+# Teacher for knowledge distillation (not a submission model): WRN-28-10, 36.5M parameters,
+# trained from scratch on the same 45k training split. No label smoothing: it erases the
+# "dark knowledge" in the logits that distillation relies on (Mueller et al., NeurIPS 2019).
+model:
+  name: wrn
+  depth: 28
+  widths: [160, 320, 640]
+enforce_param_limit: false
+data:
+  policy: ta
+  cutout: 16
+train:
+  epochs: 200
+  batch_size: 128
+  lr: 0.1
+  weight_decay: 5.0e-4
+  label_smoothing: 0.0
+  ema_decay: 0.9995
+  sam_rho: 0.05
+  ckpt_every: 5

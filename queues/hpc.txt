@@ -1,0 +1,11 @@
+# Jobs for the NYU burst cluster:  bash scripts/hpc/submit_jobs.sh <account> <gpu-partition>
+# Same 45k/5k split as the laptop runs, so all validation accuracies are comparable.
+
+# --- large distillation teachers (not submission models; no 5M limit) ---
+configs/teacher_pyramidnet272_shakedrop.yaml --set name=t3_pyramidnet272_shakedrop
+configs/teacher_shakeshake26_2x96d.yaml --set name=t4_shakeshake26_2x96d
+
+# --- <=5M students on long schedules (regularised nets that lagged at 200 epochs) ---
+configs/shakeshake26_2x40d_ta.yaml --set name=s1_shakeshake_2x40d_1200ep train.epochs=1200 data.cutmix_alpha=1.0 data.mix_prob=0.5
+configs/wrn28_shakedrop_ta.yaml --set name=s2_wrn28_shakedrop_800ep train.epochs=800 data.cutmix_alpha=1.0 data.mix_prob=0.5
+configs/wrn28_ta.yaml --set name=s3_wrn28_800ep train.epochs=800 data.cutmix_alpha=1.0 data.mix_prob=0.5

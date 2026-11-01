@@ -1,0 +1,16 @@
+# HPC round 3 (A100):  bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc3.txt
+# Round 2: s3 800ep 97.86% (98.16% TTA), s4 1600ep 97.84% (98.42%), s5 seed1 97.70% (98.08%),
+# k4 born-again KD from s3 97.80% (98.12%). Ensemble s3+s4+s5(+k4) = 98.42% (flip TTA) vs
+# WRN-28-10 teachers t1+t2 = 98.02%: the strongest available teacher is the student ensemble.
+
+# third seed of the s3 recipe (from round 2; skipped automatically if it already finished)
+configs/wrn28_ta.yaml --set name=s6_wrn28_800ep_seed2 seed=2 train.epochs=800 data.cutmix_alpha=1.0 data.mix_prob=0.5
+# ensemble distillation, teacher = s3 + s4 + s5 + k4 (all trained from scratch on the same 45k split)
+configs/kd_wrn28_from_t1.yaml --set name=k6_kd_ens4_T4_800ep train.epochs=800 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+configs/kd_wrn28_from_t1.yaml --set name=k7_kd_ens4_T1_800ep train.epochs=800 kd.temperature=1.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+# heavier mixing at the long schedule (CutMix + MixUp on every batch, as in the distillation runs)
+configs/wrn28_ta.yaml --set name=s7_wrn28_800ep_mixall train.epochs=800 data.cutmix_alpha=1.0 data.mixup_alpha=0.2 data.mix_prob=1.0
+# squeeze-excitation in every block
+configs/wrn28_ta.yaml --set name=s8_wrn28_se_800ep train.epochs=800 data.cutmix_alpha=1.0 data.mix_prob=0.5 model.se=true
+# a different architecture at the long schedule (also a more diverse ensemble member)
+configs/resnet222_ta.yaml --set name=s9_resnet222_800ep train.epochs=800 data.cutmix_alpha=1.0 data.mix_prob=0.5

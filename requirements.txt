@@ -1,0 +1,10 @@
+# Tested with Python 3.12, CUDA 13.0 wheels (pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130)
+torch>=2.4
+torchvision>=0.19
+numpy
+pandas
+pillow
+pyyaml
+matplotlib
+kagglehub
+jupyter

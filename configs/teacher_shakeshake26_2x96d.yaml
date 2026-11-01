@@ -1,0 +1,18 @@
+# Teacher for knowledge distillation (not a submission model): Shake-Shake 26 2x96d,
+# 26.2M parameters (Gastaldi 2017 recipe: lr 0.2, wd 1e-4, cosine; shortened from 1800 epochs).
+model:
+  name: shakeshake
+  depth: 26
+  widths: [96, 192, 384]
+enforce_param_limit: false
+data:
+  policy: ta
+  cutout: 16
+train:
+  epochs: 600
+  batch_size: 128
+  lr: 0.2
+  weight_decay: 1.0e-4
+  label_smoothing: 0.0
+  ema_decay: 0.9995
+  ckpt_every: 5

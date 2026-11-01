@@ -1,0 +1,17 @@
+# Phase 1: recipe ablations and architecture comparison, 200 epochs on the 45k/5k split.
+# Reference run a0 (run separately): configs/wrn28_ta.yaml --set name=a0_wrn28_ta_200ep
+
+# --- recipe ablations on WRN-28 (64,128,224), 4.84M params ---
+configs/wrn28_ta.yaml --set name=a1_wrn28_cutmix data.cutmix_alpha=1.0 data.mix_prob=0.5
+configs/wrn28_ta.yaml --set name=a2_wrn28_latesam train.sam_rho=0.05 train.sam_start_frac=0.75
+configs/wrn28_ta.yaml --set name=a3_wrn28_fullsam train.sam_rho=0.05
+configs/wrn28_ta.yaml --set name=a4_wrn28_autoaug data.policy=aa
+
+# --- architecture comparison, same recipe as a0 ---
+configs/shakeshake26_2x40d_ta.yaml --set name=b1_shakeshake_2x40d
+configs/resnet222_ta.yaml --set name=b2_resnet222_96_192_320
+configs/wrn28_shakedrop_ta.yaml --set name=b3_wrn28_shakedrop
+configs/pyramidnet110_a84_shakedrop_ta.yaml --set name=b4_pyramidnet110_a84_shakedrop
+
+# --- distillation teacher trained locally (HPC can add more later) ---
+configs/teacher_wrn28_10_sam.yaml --set name=t1_wrn28_10_sam

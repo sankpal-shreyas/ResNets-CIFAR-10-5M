@@ -1,0 +1,14 @@
+# Phase 2: knowledge distillation into the WRN-28 student (4.84M params), 45k/5k split.
+# Teacher t1_wrn28_10_sam: 97.94% val (98.10% with flip_shift TTA).
+
+# control: identical augmentation (TA + Cutout + CutMix/MixUp on every batch) and schedule, no teacher
+configs/wrn28_ta.yaml --set name=c0_wrn28_mix_300ep train.epochs=300 data.cutmix_alpha=1.0 data.mixup_alpha=0.2 data.mix_prob=1.0
+# function-matching distillation from t1 (teacher labels the same augmented + mixed batch)
+configs/kd_wrn28_from_t1.yaml --set name=k1_kd_t1_T1
+configs/kd_wrn28_from_t1.yaml --set name=k2_kd_t1_T4 kd.temperature=4.0
+
+# second teacher for an ensemble: different seed, trained with CutMix for diversity
+configs/teacher_wrn28_10_sam.yaml --set name=t2_wrn28_10_sam_cutmix seed=1 data.cutmix_alpha=1.0 data.mix_prob=0.5
+
+# Phase 2b: long distillation from the t1 + t2 teacher ensemble (T=4 matched T=1 at 300 epochs)
+configs/kd_wrn28_from_t1.yaml --set name=k3_kd_t1t2_T4_800ep train.epochs=800 kd.temperature=4.0 kd.teachers=[runs/t1_wrn28_10_sam/model_final.pt,runs/t2_wrn28_10_sam_cutmix/model_final.pt]

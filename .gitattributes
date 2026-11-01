@@ -1,0 +1,6 @@
+# Keep LF endings everywhere so the shell scripts also run on the Linux HPC cluster.
+* text=auto eol=lf
+*.pdf binary
+*.png binary
+*.pt binary
+*.ipynb text eol=lf

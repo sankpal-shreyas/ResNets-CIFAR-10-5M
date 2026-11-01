@@ -1,0 +1,15 @@
+# HPC round 2 (A100):  bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc2.txt
+# Round 1 result: s3 (WRN-28 4.84M, 800 epochs, CutMix p=0.5) = 97.86% val, 98.16% with TTA,
+# better than 300-epoch distillation and level with the WRN-28-10 teacher: schedule length matters most.
+
+# longer schedule
+configs/wrn28_ta.yaml --set name=s4_wrn28_1600ep train.epochs=1600 data.cutmix_alpha=1.0 data.mix_prob=0.5
+# more seeds of the s3 recipe: seed-to-seed variance and ensemble members for stronger teachers
+configs/wrn28_ta.yaml --set name=s5_wrn28_800ep_seed1 seed=1 train.epochs=800 data.cutmix_alpha=1.0 data.mix_prob=0.5
+configs/wrn28_ta.yaml --set name=s6_wrn28_800ep_seed2 seed=2 train.epochs=800 data.cutmix_alpha=1.0 data.mix_prob=0.5
+# 800-epoch distillation: from s3 alone (born-again), and from the s3 + t1 ensemble (98.18% val);
+# k5 needs runs/t1_wrn28_10_sam/model_final.pt uploaded from the laptop
+configs/kd_wrn28_from_t1.yaml --set name=k4_kd_s3_T4_800ep train.epochs=800 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt]
+configs/kd_wrn28_from_t1.yaml --set name=k5_kd_s3t1_T4_800ep train.epochs=800 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/t1_wrn28_10_sam/model_final.pt]
+# final candidate: the s3 recipe on all 50k training images (no validation split)
+configs/wrn28_ta.yaml --set name=f1_wrn28_800ep_full train.epochs=800 data.cutmix_alpha=1.0 data.mix_prob=0.5 data.val_size=0
