@@ -1,0 +1,7 @@
+# HPC round 8 (A100):  bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc8.txt
+# k13f (ens4, 3200 epochs, all 50k) is no better than k10f (1600 epochs) on the CIFAR-10 test batch
+# (97.78 / 97.91 vs 97.89 / 98.08, no TTA / flip_shift; p=0.34 / 0.07): on all 50k images patience
+# stops paying at about 1600 epochs, so k23f (12800 epochs, ~48 A100-hours) is not worth running.
+# k24f distils from ens4 + t4 at 1600 epochs (about 6 h): the t4 teacher at the best length (k20f is
+# the same at 3200), moved here from the laptop (queues/phase6_local.txt, paused at epoch 20).
+configs/kd_wrn28_from_t1.yaml --set name=k24f_kd_ens4t4_T4_1600ep_full train.epochs=1600 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt]

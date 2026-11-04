@@ -1,0 +1,23 @@
+# HPC round 5 (A100):  bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc5.txt
+# Round 4: k11f (ens6, 1600 ep, all 50k) is a submission candidate; s11 (stochastic depth) ties the
+# plain seeds (97.80 / 98.18 vs 97.66-97.86 / 98.10-98.16); k10, k11 and k13 never started.
+# Public LB: k8f (ens4 distillation, 800 ep, 50k) 0.909 vs f1 (no distillation) 0.893. On
+# validation the students still trail their teacher ensembles by 0.2-0.3%, and ensembles plateau
+# (98.4-98.5 no TTA, 98.5-98.6 flip_shift) whatever 5M models are added; distilled students make
+# poorer teachers (k4+k6+k7: 98.20 / 98.28). This round tests two ways past that:
+#  - patience (Beyer et al. 2022): 1600 and 3200 distillation epochs (k10, k13 vs k6 at 800);
+#  - stronger, different teachers: two WRN-28-10s with the 800-epoch recipe (t1 had 200 epochs and
+#    still added to the ensembles), then students that wait for them (k16, k16f).
+# ens4 = s3+s4+s5+k4 (as k6), ens6 = s3+s4+s5+s6+s8+s9 (as k11f). Roughly: k10 3 h, k13 6 h,
+# k15f 9 h, t3/t4 5 h each, then k16 9 h and k16f 11 h; about 50 GPU-hours.
+
+configs/kd_wrn28_from_t1.yaml --set name=k10_kd_ens4_T4_1600ep train.epochs=1600 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+configs/kd_wrn28_from_t1.yaml --set name=k13_kd_ens4_T4_3200ep train.epochs=3200 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+# submission candidate: k11f's teachers, twice the epochs
+configs/kd_wrn28_from_t1.yaml --set name=k15f_kd_ens6_T4_3200ep_full train.epochs=3200 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/s6_wrn28_800ep_seed2/model_final.pt,runs/s8_wrn28_se_800ep/model_final.pt,runs/s9_resnet222_800ep/model_final.pt]
+configs/teacher_wrn28_10.yaml --set name=t3_wrn28_10_800ep
+configs/teacher_wrn28_10.yaml --set name=t4_wrn28_10_800ep_seed1 seed=1
+# students of the two WRN-28-10s plus the small teachers: k16 against k10 on validation,
+# k16f (submission candidate) against k11f
+after=t3_wrn28_10_800ep,t4_wrn28_10_800ep_seed1 configs/kd_wrn28_from_t1.yaml --set name=k16_kd_ens4big2_T4_1600ep train.epochs=1600 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t3_wrn28_10_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt]
+after=t3_wrn28_10_800ep,t4_wrn28_10_800ep_seed1 configs/kd_wrn28_from_t1.yaml --set name=k16f_kd_ens6big2_T4_1600ep_full train.epochs=1600 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/s6_wrn28_800ep_seed2/model_final.pt,runs/s8_wrn28_se_800ep/model_final.pt,runs/s9_resnet222_800ep/model_final.pt,runs/t3_wrn28_10_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt]

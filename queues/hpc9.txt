@@ -1,0 +1,10 @@
+# HPC round 9 (A100):  bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc9.txt
+# Round 6/8 on the CIFAR-10 test batch (none / flip / flip_shift): the WRN-28-10 teacher t4 helps at
+# 3200 epochs, k20f (ens4 + t4) 98.04 / 98.20 / 98.14 vs k13f (ens4) 97.78 / 97.93 / 97.91 (p=0.02 /
+# 0.007 / 0.02), and with t4 patience pays again: k24f (1600) 97.88 / 98.01 / 97.99, k22f (6400)
+# 98.13 / 98.07 / 98.14 = k20f. Without t4, 6400 epochs (k21f 97.94 / 98.02 / 98.01) = 1600 (k10f).
+# So the teacher is the lever left: t5f is a second WRN-28-10 (t4's recipe, seed 2, all 50k, ~2.7 h)
+# and k25f distils from ens4 + t4 + t5f for 3200 epochs (~13 h). If t5f's first job never gets a
+# node, Slurm cancels k25f: run this command again once t5f is running.
+configs/teacher_wrn28_10.yaml --set name=t5f_wrn28_10_800ep_seed2_full seed=2 data.val_size=0
+after=t5f_wrn28_10_800ep_seed2_full configs/kd_wrn28_from_t1.yaml --set name=k25f_kd_ens4t4t5_T4_3200ep_full train.epochs=3200 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt,runs/t5f_wrn28_10_800ep_seed2_full/model_final.pt]

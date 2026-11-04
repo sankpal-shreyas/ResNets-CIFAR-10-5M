@@ -12,3 +12,16 @@ configs/wrn28_ta.yaml --set name=s10_wrn28_1600ep_seed1 seed=1 train.epochs=1600
 # added after round 3: k10's recipe (4-teacher distillation, 1600 epochs) on all 50k images;
 # submission candidate if k10 (HPC) validates best, k11f (HPC) otherwise
 configs/kd_wrn28_from_t1.yaml --set name=k10f_kd_ens4_T4_1600ep_full train.epochs=1600 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+# k8f scored 0.909 public (f1 0.893): distillation gains far more on the test set than on validation
+# (+0.15%), where teacher ensembles of any size tie. Same recipe as k8f, 9 more varied teachers
+# (WRN seeds at 800/1600 ep, SE, ResNet-222, heavy mixing, photometric) instead of 4.
+configs/kd_wrn28_from_t1.yaml --set name=k14f_kd_ens9_T4_800ep_full train.epochs=800 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/s6_wrn28_800ep_seed2/model_final.pt,runs/s7_wrn28_800ep_mixall/model_final.pt,runs/s8_wrn28_se_800ep/model_final.pt,runs/s9_resnet222_800ep/model_final.pt,runs/s10_wrn28_1600ep_seed1/model_final.pt,runs/r1_wrn28_800ep_photo/model_final.pt]
+# added after round 4. Seed replicate of k6 (45k split): how far apart two distillation seeds land on
+# validation, to read k10 / k13 (HPC round 5, 1600 / 3200 epochs) against k6
+configs/kd_wrn28_from_t1.yaml --set name=k17_kd_ens4_T4_800ep_seed1 seed=1 train.epochs=800 kd.temperature=4.0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+# k14 (9 teachers, 45k) and k18f (4 teachers, 3200 ep) dropped: k10f (k8f's 4 teachers, 1600 ep)
+# scored 0.899 public, so the four distilled submissions (0.898-0.909) are noise around ~0.902 and the
+# teacher set does not matter. Untried lever: compute per parameter. Downsampling later keeps
+# feature maps bigger at the same 4.84M parameters; 200-epoch screens against a0 (97.12 / 97.54).
+configs/wrn28_ta.yaml --set name=a5_wrn28_s121_200ep model.strides=[1,2,1]
+configs/wrn28_ta.yaml --set name=a6_wrn28_s112_200ep model.strides=[1,1,2]

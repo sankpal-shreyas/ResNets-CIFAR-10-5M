@@ -1,0 +1,16 @@
+# Phase 5 (laptop, from 2026-11-02). Phase 4 results: k17 (k6's recipe, seed 1) = 98.08 / 98.24 vs
+# k6 98.08 / 98.26 (34/34 discordant images without TTA): distilled students repeat closely, so
+# they are the sharper testbed. Stride screens at 200 epochs vs a0 (97.12 / 97.56): a5 (1,2,1)
+# 97.16 / 97.58; a6 (1,1,2) 97.38 / 97.66 (71/58 discordant, p=0.29) at 2x the time.
+# k19 = k6 with a6's strides, against k6 and k17.
+configs/kd_wrn28_from_t1.yaml --set name=k19_kd_ens4_T4_800ep_s112 train.epochs=800 kd.temperature=4.0 model.strides=[1,1,2] kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+# k19 = 98.18 / 98.42 vs k6 98.08 / 98.26 and k17 98.08 / 98.24 (vs k6: 36/31 and 29/21 discordant,
+# p=0.63 / 0.32; level with both where k6 and k17 agree): small and unconfirmed, like a6's, at 1.6x
+# the laptop time. Best student on validation so far, so its full-data version is a spare
+# candidate next to k8f (same 4 teachers, 800 ep, all 50k).
+# configs/kd_wrn28_from_t1.yaml --set name=k19f_kd_ens4_T4_800ep_s112_full train.epochs=800 kd.temperature=4.0 data.val_size=0 model.strides=[1,1,2] kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+# HPC round 5: patience works. k10 (1600 ep) 98.26 / 98.50 and k13 (3200 ep) 98.48 / 98.46 vs the
+# 800-ep seeds k6 98.08 / 98.26 and k17 98.08 / 98.24 (k13 vs k6 without TTA 43/23, p=0.02). On the
+# CIFAR-10 test batch (10k, never trained on) k13 (45k) 97.91 / 98.00 ties k10f and k11f (50k,
+# 1600 ep) and beats k8f (97.65 / 97.86). k19f (800 ep) stopped at epoch 16 for k13's recipe on all 50k.
+configs/kd_wrn28_from_t1.yaml --set name=k13f_kd_ens4_T4_3200ep_full train.epochs=3200 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]

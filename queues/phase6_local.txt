@@ -1,0 +1,6 @@
+# Phase 6 (laptop). k13f (k13's recipe, 3200 epochs, all 50k) is no better than k10f (1600 epochs)
+# on the CIFAR-10 test batch: 97.78 / 97.91 vs 97.89 / 98.08 (no TTA / flip_shift; 49/60 and 30/47
+# discordant, p=0.34 and 0.07), so on all 50k images patience stops paying between 1600 and 3200
+# epochs. k24f distils from ens4 + t4 at 1600 epochs: the teacher lever at the best length found,
+# and a final-model candidate that does not depend on the HPC queue (k20f is the same at 3200).
+configs/kd_wrn28_from_t1.yaml --set name=k24f_kd_ens4t4_T4_1600ep_full train.epochs=1600 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt]

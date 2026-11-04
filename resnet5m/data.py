@@ -6,6 +6,8 @@ torchvision copy, which loads much faster than 50,000 PNG files.
 
 Validation. All model selection uses a stratified hold-out split of the training data
 (val_size images, val_size/10 per class); the hidden test images are only ever predicted.
+The official CIFAR-10 test batch (10,000 labelled images) is never trained on; it is a second
+held-out set, the only one for models trained on all 50k images.
 """
 import math
 import os
@@ -26,6 +28,12 @@ CLASSES = ("airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "hors
 def load_cifar10_train(root="data"):
     """Return (images uint8 [N,3,32,32] numpy, labels int64 [N] numpy)."""
     ds = torchvision.datasets.CIFAR10(os.path.join(root, "cifar10"), train=True, download=True)
+    return np.ascontiguousarray(ds.data.transpose(0, 3, 1, 2)), np.asarray(ds.targets, dtype=np.int64)
+
+
+def load_cifar10_test(root="data"):
+    """The official CIFAR-10 test batch, for evaluation only: (uint8 [10000,3,32,32], int64 [10000])."""
+    ds = torchvision.datasets.CIFAR10(os.path.join(root, "cifar10"), train=False, download=True)
     return np.ascontiguousarray(ds.data.transpose(0, 3, 1, 2)), np.asarray(ds.targets, dtype=np.int64)
 
 

@@ -152,11 +152,20 @@ def main():
     if start_epoch == 0:
         with open(log_path, "w", newline="") as f:
             csv.writer(f).writerow(LOG_FIELDS)
+    elif os.path.exists(log_path):  # drop the epochs after the checkpoint: they are trained again
+        with open(log_path, newline="") as f:
+            rows = [r for r in csv.DictReader(f) if int(r["epoch"]) <= start_epoch]
+        with open(log_path, "w", newline="") as f:
+            w = csv.DictWriter(f, LOG_FIELDS)
+            w.writeheader()
+            w.writerows(rows)
 
     def save_last(epoch):
+        # via a temporary file, so a job killed mid-save (e.g. at its time limit) keeps the last one
         torch.save({"model": model.state_dict(), "opt": opt.state_dict(),
                     "ema": ema.module.state_dict() if ema else None, "scaler": scaler.state_dict(),
-                    "epoch": epoch, "step": step, "elapsed": elapsed}, last_path)
+                    "epoch": epoch, "step": step, "elapsed": elapsed}, last_path + ".tmp")
+        os.replace(last_path + ".tmp", last_path)
 
     def compute_loss(x, targets, t_probs):
         with torch.autocast("cuda", dtype=amp_dtype, enabled=amp_dtype is not None):

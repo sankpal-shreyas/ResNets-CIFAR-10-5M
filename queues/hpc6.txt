@@ -1,0 +1,15 @@
+# HPC round 6 (A100):  bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc6.txt
+# Round 5: patience works. Validation: k10 (1600 ep) 98.26 / 98.50 and k13 (3200 ep) 98.48 / 98.46 vs
+# k6 (800 ep) 98.08 / 98.26 (no TTA / flip_shift). CIFAR-10 test batch (10k, never trained on; the
+# only held-out set for the all-50k models): k10f 97.89 vs k8f 97.65 without TTA (71/47, p=0.03),
+# and k13 (45k) ties k10f; pooled with validation, k13 beats k6 (p=0.002) and k10 (p=0.01). The
+# WRN-28-10 teacher t4 (98.30 val, 97.92 test) lifts the teacher ensemble on the test batch from
+# 97.88 (ens4) to 98.13 (ens4+t4). Teacher sets of 5M models tie (k10f = k11f, k14f = k8f) and
+# strides do not help (k19 = k6). t3, k15f, k16 and k16f did not come back.
+# Round 6 crosses the two remaining levers on all 50k images: teachers ens4 or ens4+t4, 3200 or
+# 6400 epochs (k13f, ens4 x 3200, runs on the laptop). Roughly k22f 21 h, k21f 14 h, k20f 11 h:
+# about 46 GPU-hours. If k22f hits the 24-hour limit, run submit_jobs.sh again: it resumes.
+
+configs/kd_wrn28_from_t1.yaml --set name=k22f_kd_ens4t4_T4_6400ep_full train.epochs=6400 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt]
+configs/kd_wrn28_from_t1.yaml --set name=k21f_kd_ens4_T4_6400ep_full train.epochs=6400 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt]
+configs/kd_wrn28_from_t1.yaml --set name=k20f_kd_ens4t4_T4_3200ep_full train.epochs=3200 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt]

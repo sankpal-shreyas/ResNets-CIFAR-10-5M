@@ -1,0 +1,7 @@
+# HPC round 7 (A100):  bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc7.txt
+# One more doubling of patience: k22f (ens4 + t4 teachers, all 50k) for 12800 epochs. About 43 h on
+# one A100, so a standby job continues it after the 24-hour limit (submit_jobs.sh now queues three
+# per run). Submitted alongside round 6 rather than after it so that it finishes around Nov 4, two
+# days before the deadline. If round 6 shows 6400 epochs no better than 3200 (k21f vs k13f and k22f
+# vs k20f on the CIFAR-10 test batch), stop it:  scancel -n k23f_kd_ens4t4_T4_12800ep_full
+configs/kd_wrn28_from_t1.yaml --set name=k23f_kd_ens4t4_T4_12800ep_full train.epochs=12800 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt]

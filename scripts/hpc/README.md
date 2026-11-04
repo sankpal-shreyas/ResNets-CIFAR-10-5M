@@ -35,14 +35,26 @@ into `/scratch/$USER/dl-p1/data/cifar10/` and run the script again.
 ## 4. Submit the training jobs (1 x A100 each)
 ```bash
 bash scripts/hpc/submit_jobs.sh              # = cs_gy_6923-2026fa on c12m85-a100-1
-squeue -u $USER                              # PD = waiting for a cloud node, R = running
+squeue -u $USER                              # R = running, PD = waiting, PD (Dependency) = standby
 tail -f runs/logs/<job-name>-<jobid>.out     # training log
 sacct -u $USER --format=JobName%30,State,Elapsed   # finished / failed jobs
 ```
 
-Jobs keep running after the Jupyter session ends. If a job is cancelled or hits its time limit,
-run `submit_jobs.sh` again: finished and still-queued runs are skipped, and interrupted ones resume
-from their last checkpoint (`runs/<name>/last.pt`).
+Jobs keep running after the Jupyter session ends. Each run is submitted as one job plus three
+standby jobs (`RETRIES=<n> bash scripts/hpc/submit_jobs.sh ...` for another number). A standby job
+starts only when all of the run's earlier jobs have ended unsuccessfully, and continues from the
+last checkpoint (`runs/<name>/last.pt`, saved every 10 epochs); once the run finishes, Slurm cancels
+its remaining standby jobs, so `sacct` lists them as `CANCELLED`. This covers the 24-hour time
+limit, crashes, and cloud nodes that never come up (about half of our jobs: `sacct` shows the job
+`CANCELLED` after about 12 minutes with no `batch` step). Running `submit_jobs.sh` again skips
+finished runs, tops unfinished ones back up to four jobs, and resubmits runs that have none left.
+To stop a run, cancel all of its jobs with `scancel -n <name>`: cancelling only the running job
+starts a standby one.
+
+A queue line starting with `after=<run>[,<run>...]` (e.g. a student distilled from teachers trained
+by earlier lines) is submitted with a Slurm dependency: it shows as `PD (Dependency)` until those
+runs' current jobs finish, and is cancelled automatically if one of them fails, even if a standby
+job then finishes that run (run `submit_jobs.sh` again once it has).
 
 ## 5. Bring results back
 When `runs/<name>/summary.json` exists, download from `runs/<name>/` (file browser, right-click →
