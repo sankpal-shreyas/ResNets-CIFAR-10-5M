@@ -1,0 +1,28 @@
+# Depth vs width study on HPC Cloud Bursting (1 x A100 per job):
+#   RETRIES=1 bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc_depth_width.txt
+# (each run = 1 job + 1 standby job that starts only if the first ends unsuccessfully)
+#
+# Pre-activation Wide ResNet, depth = 6n + 4 (n blocks per stage), widths = 3 stage widths.
+# Every run uses the same recipe so only the architecture changes: configs/wrn28_ta.yaml as is
+# (TrivialAugment + Cutout 16, label smoothing 0.1, EMA, SGD-Nesterov lr 0.1, cosine, 200 epochs,
+# seed 0, 45k/5k split) -- the protocol of the earlier 200-epoch screens (a0-a6, b1-b4), so all of
+# them compare directly. dwA_d28_w64 repeats a0 (97.12 / 97.54, no TTA / flip_shift): a check that
+# this setup reproduces it. Analysis: notebooks/depth_width.ipynb.
+
+# --- A. equal budget (4.73-4.99M params, 713-799M MACs): trade depth for width ----------------
+# widths keep the baseline's 1 : 2 : ~3.5 stage ratio, widened as depth drops
+configs/wrn28_ta.yaml --set name=dwA_d10_w144 model.depth=10 model.widths=[144,288,488]
+configs/wrn28_ta.yaml --set name=dwA_d16_w96 model.depth=16 model.widths=[96,192,328]
+configs/wrn28_ta.yaml --set name=dwA_d22_w72 model.depth=22 model.widths=[72,144,264]
+configs/wrn28_ta.yaml --set name=dwA_d28_w64 model.depth=28 model.widths=[64,128,224]
+configs/wrn28_ta.yaml --set name=dwA_d34_w56 model.depth=34 model.widths=[56,112,200]
+configs/wrn28_ta.yaml --set name=dwA_d40_w48 model.depth=40 model.widths=[48,96,184]
+
+# --- B. width only: depth 28, widths x0.5 / x0.75 (x1 = dwA_d28_w64) ----------------------------
+configs/wrn28_ta.yaml --set name=dwB_d28_w32 model.depth=28 model.widths=[32,64,112]
+configs/wrn28_ta.yaml --set name=dwB_d28_w48 model.depth=28 model.widths=[48,96,168]
+
+# --- C. depth only: widths (64,128,224), depth 10 / 16 / 22 (28 = dwA_d28_w64) -----------------
+configs/wrn28_ta.yaml --set name=dwC_d10_w64 model.depth=10 model.widths=[64,128,224]
+configs/wrn28_ta.yaml --set name=dwC_d16_w64 model.depth=16 model.widths=[64,128,224]
+configs/wrn28_ta.yaml --set name=dwC_d22_w64 model.depth=22 model.widths=[64,128,224]

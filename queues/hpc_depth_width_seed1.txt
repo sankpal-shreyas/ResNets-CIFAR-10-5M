@@ -1,0 +1,11 @@
+# Depth vs width study, second seed of the equal-budget family A (same settings, seed=1).
+# Seed-to-seed spread of this recipe is ~0.1-0.2%, about the size of the depth/width effects,
+# so a second seed (and the paired McNemar test in notebooks/depth_width.ipynb) is needed before
+# trusting a ranking.
+#   RETRIES=1 bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc_depth_width_seed1.txt
+configs/wrn28_ta.yaml --set name=dwA_d10_w144_s1 seed=1 model.depth=10 model.widths=[144,288,488]
+configs/wrn28_ta.yaml --set name=dwA_d16_w96_s1 seed=1 model.depth=16 model.widths=[96,192,328]
+configs/wrn28_ta.yaml --set name=dwA_d22_w72_s1 seed=1 model.depth=22 model.widths=[72,144,264]
+configs/wrn28_ta.yaml --set name=dwA_d28_w64_s1 seed=1 model.depth=28 model.widths=[64,128,224]
+configs/wrn28_ta.yaml --set name=dwA_d34_w56_s1 seed=1 model.depth=34 model.widths=[56,112,200]
+configs/wrn28_ta.yaml --set name=dwA_d40_w48_s1 seed=1 model.depth=40 model.widths=[48,96,184]

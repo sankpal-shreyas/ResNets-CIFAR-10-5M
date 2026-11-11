@@ -62,9 +62,14 @@ while read -r line || [ -n "$line" ]; do
     [ -n "$dep" ] && opts=(--dependency="$dep" --kill-on-invalid-dep=yes)
     # --export=ALL: the job gets this shell's environment (minus the variables unset above)
     # shellcheck disable=SC2086
-    id=$(sbatch --parsable --export=ALL --account="$ACCOUNT" --partition="$PARTITION" --time="$TIME" \
-      --job-name="$name" --output="runs/logs/%x-%j.out" ${opts[@]+"${opts[@]}"} \
+    cmd=(sbatch --parsable --export=ALL --account="$ACCOUNT" --partition="$PARTITION" --time="$TIME"
+      --job-name="$name" --output="runs/logs/%x-%j.out" ${opts[@]+"${opts[@]}"}
       scripts/hpc/train.sbatch "$config" $overrides)
+    if [ -n "${DRY_RUN:-}" ]; then  # DRY_RUN=1: print the sbatch commands, submit nothing
+      echo "  ${cmd[*]}"; id="dry-$name-${#ids[@]}"
+    else
+      id=$("${cmd[@]}")
+    fi
     ids+=("${id%%;*}")
     new+=("${id%%;*}")
   done

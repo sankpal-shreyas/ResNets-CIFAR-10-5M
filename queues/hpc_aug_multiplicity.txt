@@ -1,0 +1,16 @@
+# Augmentation multiplicity on top of k25f (HPC, 1 x A100 each, ~13 h):
+#   RETRIES=1 bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc_aug_multiplicity.txt
+#
+# Exactly k25f's run (same 6 teachers, T=4, alpha 0.1, TrivialAugment + Cutout + CutMix/MixUp on every
+# batch, 3200 epochs, all 50k images) with one change: data.repeats. Each batch of 128 holds 128/r
+# different images, each in r independently augmented (and independently mixed) copies, and the
+# teachers label every copy (Fort et al. 2021, "Drawing multiple augmentation samples per image during
+# training efficiently decreases test error"). Epoch length and cost per epoch are unchanged.
+#
+# Needs the teacher checkpoints in runs/<name>/model_final.pt (upload p1_teachers.zip, see
+# scripts/hpc/README.md). Decision rule, fixed before the runs: replace k25f only if a run beats it on
+# the CIFAR-10 test batch (flip_shift) by >= 0.3 points with paired McNemar p < 0.1; otherwise k25f
+# stays and this is reported as a tested idea.
+
+configs/kd_wrn28_from_t1.yaml --set name=k27f_kd_ens4t4t5_T4_3200ep_rep2_full data.repeats=2 train.epochs=3200 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt,runs/t5f_wrn28_10_800ep_seed2_full/model_final.pt]
+configs/kd_wrn28_from_t1.yaml --set name=k28f_kd_ens4t4t5_T4_3200ep_rep4_full data.repeats=4 train.epochs=3200 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt,runs/t5f_wrn28_10_800ep_seed2_full/model_final.pt]
