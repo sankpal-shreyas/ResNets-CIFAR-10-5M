@@ -12,4 +12,6 @@ submission*.csv
 kaggle.txt
 project1.pdf
 p1_code*.zip
+p1_teachers*.zip
+*.tgz
 submissions/

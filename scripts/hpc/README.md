@@ -15,8 +15,16 @@ on long schedules, all on the same 45k/5k split as the laptop runs.
 https://ood.burst.hpc.nyu.edu → *Interactive Apps* → *Jupyter*: account `cs_gy_6923-2026fa`,
 partition `interactive`, ~3 hours → *Launch* → *Connect to Jupyter*.
 
-## 2. Upload the code
-JupyterLab file browser → *Upload* → `p1_code.zip` from the project folder.
+## 2a. Distillation runs: upload the teachers
+Queues that distil (`kd.teachers=[...]`, e.g. `queues/hpc_aug_multiplicity.txt`) need the teacher
+checkpoints under `runs/<name>/model_final.pt` in the code directory. On the laptop,
+`python scripts/hpc/pack_teachers.py <queue file>` writes `p1_teachers.zip` (only the checkpoints that
+queue names); upload it and run `unzip -o ~/p1_teachers.zip -d /scratch/$USER/dl-p1/code`.
+
+## 2. Upload the code and the data
+On the laptop: `python scripts/hpc/pack_code.py` writes `p1_code.zip` (code only, ~100 kB).
+JupyterLab file browser (home directory) → *Upload* → `p1_code.zip` and the Kaggle `data.zip`
+(125 MB; `setup_env.sh` unpacks it and caches the training images).
 
 ## 3. Unpack, check, set up (one time, ~15-40 min)
 *File → New → Terminal*:
@@ -28,9 +36,15 @@ bash scripts/hpc/check_access.sh
 bash scripts/hpc/setup_env.sh
 ```
 
-`setup_env.sh` installs Python 3.12 + PyTorch and downloads CIFAR-10 into `/scratch/$USER/dl-p1`.
-If the CIFAR-10 download stalls, upload `data/cifar10/cifar-10-python.tar.gz` from the laptop
-into `/scratch/$USER/dl-p1/data/cifar10/` and run the script again.
+`setup_env.sh` installs Python 3.12 + PyTorch into `/scratch/$USER/dl-p1/venv`, unpacks
+`~/data.zip` into `/scratch/$USER/dl-p1/data/kaggle` and builds the training cache. Without
+`data.zip` it downloads CIFAR-10 with torchvision instead (slow).
+
+Depth vs width study: `RETRIES=1 bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1
+queues/hpc_depth_width.txt` (11 runs), then `queues/hpc_depth_width_seed1.txt` (6 runs). These
+200-epoch runs fit well inside the 24-hour limit, so one standby job each (`RETRIES=1`, for nodes
+that never come up) is enough. `DRY_RUN=1` in front of the command prints the `sbatch` lines
+without submitting.
 
 ## 4. Submit the training jobs (1 x A100 each)
 ```bash
