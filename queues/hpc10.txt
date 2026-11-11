@@ -1,0 +1,7 @@
+# HPC round 10 (A100):  bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc10.txt
+# Long shot. Round 9: the second WRN-28-10 (t5f) lifted the teacher ensemble from 98.12 to 98.28 on
+# the CIFAR-10 test batch (flip_shift), but the student only from 98.14 (k20f) to 98.17 (k25f). The
+# two WRN-28-10s alone are the strongest teacher set (98.30 / 98.36 / 98.41, no TTA / flip /
+# flip_shift); k26f distils from them only. About 11 s per epoch on an A100, ~10 h. Worth submitting
+# only if it beats k25f on the CIFAR-10 test batch with p < 0.05.
+configs/kd_wrn28_from_t1.yaml --set name=k26f_kd_t4t5_T4_3200ep_full train.epochs=3200 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/t4_wrn28_10_800ep_seed1/model_final.pt,runs/t5f_wrn28_10_800ep_seed2_full/model_final.pt]
