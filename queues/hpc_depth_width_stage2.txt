@@ -1,0 +1,15 @@
+# Stage 2 of the depth vs width study: only if a screened shape beats WRN-28 (64,128,224) on BOTH
+# seeds by >= 0.3% with McNemar p < 0.05 (notebooks/depth_width.ipynb, section 4).
+# Then train that shape with exactly k20f's recipe and teachers, changing only model.depth and
+# model.widths, and compare it with k20f on the CIFAR-10 test batch (scripts/eval_cifar10_test.py).
+#
+# Needs the five teacher checkpoints in runs/<name>/model_final.pt (from the teammate's /scratch):
+#   s3_wrn28_800ep, s4_wrn28_1600ep, s5_wrn28_800ep_seed1, k4_kd_s3_T4_800ep, t4_wrn28_10_800ep_seed1
+#
+#   bash scripts/hpc/submit_jobs.sh cs_gy_6923-2026fa c12m85-a100-1 queues/hpc_depth_width_stage2.txt
+#
+# Uncomment ONE line and set DEPTH / WIDTHS to the winner (e.g. model.depth=16 model.widths=[96,192,328]).
+# 1600 epochs (~6 h on an A100, k24f's length) fits before the deadline; 3200 (~11 h) matches k20f.
+
+# configs/kd_wrn28_from_t1.yaml --set name=k30f_kd_ens4t4_T4_1600ep_full_dDEPTH model.name=wrn model.depth=DEPTH model.widths=WIDTHS train.epochs=1600 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt]
+# configs/kd_wrn28_from_t1.yaml --set name=k31f_kd_ens4t4_T4_3200ep_full_dDEPTH model.name=wrn model.depth=DEPTH model.widths=WIDTHS train.epochs=3200 kd.temperature=4.0 data.val_size=0 kd.teachers=[runs/s3_wrn28_800ep/model_final.pt,runs/s4_wrn28_1600ep/model_final.pt,runs/s5_wrn28_800ep_seed1/model_final.pt,runs/k4_kd_s3_T4_800ep/model_final.pt,runs/t4_wrn28_10_800ep_seed1/model_final.pt]

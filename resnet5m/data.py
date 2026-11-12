@@ -26,15 +26,50 @@ CLASSES = ("airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "hors
 
 
 def load_cifar10_train(root="data"):
-    """Return (images uint8 [N,3,32,32] numpy, labels int64 [N] numpy)."""
+    """Return (images uint8 [N,3,32,32] numpy, labels int64 [N] numpy).
+
+    Uses the Kaggle competition files (data/kaggle/train_images + train_labels.csv) when present,
+    cached after the first read as data/kaggle/train_cache.npz; otherwise the torchvision copy."""
+    if os.path.exists(os.path.join(root, "kaggle", "train_labels.csv")):
+        return load_kaggle_train(root)
     ds = torchvision.datasets.CIFAR10(os.path.join(root, "cifar10"), train=True, download=True)
     return np.ascontiguousarray(ds.data.transpose(0, 3, 1, 2)), np.asarray(ds.targets, dtype=np.int64)
 
 
 def load_cifar10_test(root="data"):
-    """The official CIFAR-10 test batch, for evaluation only: (uint8 [10000,3,32,32], int64 [10000])."""
+    """The official CIFAR-10 test batch, for evaluation only: (uint8 [10000,3,32,32], int64 [10000]).
+
+    Uses the torchvision copy if present, else the Hugging Face copy (data/cifar10_hf/test.parquet,
+    uoft-cs/cifar10, same images and order; ~24 MB instead of the slow 170 MB torchvision download),
+    else downloads with torchvision."""
+    tv = os.path.join(root, "cifar10", "cifar-10-batches-py", "test_batch")
+    parquet = os.path.join(root, "cifar10_hf", "test.parquet")
+    if not os.path.exists(tv) and os.path.exists(parquet):
+        import io
+        df = pd.read_parquet(parquet, columns=["img", "label"])
+        imgs = np.stack([np.asarray(Image.open(io.BytesIO(r["bytes"])).convert("RGB")) for r in df["img"]])
+        return np.ascontiguousarray(imgs.transpose(0, 3, 1, 2)), df["label"].to_numpy(dtype=np.int64).copy()
     ds = torchvision.datasets.CIFAR10(os.path.join(root, "cifar10"), train=False, download=True)
     return np.ascontiguousarray(ds.data.transpose(0, 3, 1, 2)), np.asarray(ds.targets, dtype=np.int64)
+
+
+def load_kaggle_train(root="data"):
+    """Kaggle training images in train_labels.csv order (identical to CIFAR-10 train)."""
+    cache = os.path.join(root, "kaggle", "train_cache.npz")
+    if os.path.exists(cache):
+        d = np.load(cache)
+        return d["images"], d["labels"]
+    meta = pd.read_csv(os.path.join(root, "kaggle", "train_labels.csv")).sort_values("id")
+    print(f"reading {len(meta)} Kaggle training PNGs (cached afterwards in {cache}) ...", flush=True)
+    imgs = [np.asarray(Image.open(os.path.join(root, "kaggle", "train_images", f)).convert("RGB"))
+            for f in meta["filename"]]
+    images = np.ascontiguousarray(np.stack(imgs).transpose(0, 3, 1, 2))
+    labels = meta["label"].to_numpy(dtype=np.int64)
+    # write-then-rename: jobs that start together never read a half-written cache
+    tmp = f"{cache[:-4]}.tmp{os.getpid()}.npz"
+    np.savez(tmp, images=images, labels=labels)
+    os.replace(tmp, cache)
+    return images, labels
 
 
 def stratified_split(labels, val_size, seed=0):
